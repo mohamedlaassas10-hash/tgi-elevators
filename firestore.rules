@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isActiveUser() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.actif == true;
+    }
+
+    function isDirector() {
+      return isActiveUser()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'DIRECTEUR';
+    }
+
+    match /users/{uid} {
+      allow read, write: if isDirector();
+    }
+
+    match /settings/{document=**} {
+      allow read, write: if isDirector();
+    }
+
+    match /{collection}/{document=**} {
+      allow read, create, update: if isActiveUser()
+        && !(collection in ['users', 'settings']);
+      allow delete: if isActiveUser()
+        && !(collection in ['users', 'settings', 'factures', 'paiements', 'recus']);
+    }
+  }
+}
