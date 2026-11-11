@@ -1,6 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function isActiveUser() {
       return request.auth != null
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
@@ -12,8 +13,13 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'DIRECTEUR';
     }
 
+    function pasDeSuppressionLogique() {
+      return !('deletedAt' in request.resource.data) || request.resource.data.deletedAt == null;
+    }
+
     match /users/{uid} {
-      allow read, write: if isDirector();
+      allow read: if isActiveUser() && (request.auth.uid == uid || isDirector());
+      allow write: if isDirector();
     }
 
     match /settings/{document=**} {
@@ -25,8 +31,16 @@ service cloud.firestore {
     }
 
     match /{collection}/{document=**} {
-      allow read, create, update: if isActiveUser()
+      allow read: if isActiveUser()
         && !(collection in ['users', 'settings', 'counters']);
+
+      allow create: if isActiveUser()
+        && !(collection in ['users', 'settings', 'counters']);
+
+      allow update: if isActiveUser()
+        && !(collection in ['users', 'settings', 'counters'])
+        && (!(collection in ['factures', 'paiements', 'recus']) || pasDeSuppressionLogique());
+
       allow delete: if isActiveUser()
         && !(collection in ['users', 'settings', 'factures', 'paiements', 'recus', 'counters']);
     }
