@@ -39,6 +39,46 @@ describe("calculerLigne", () => {
       { htCentimes: 1, tvaCentimes: 1, ttcCentimes: 2 }
     );
   });
+
+  it("refuse un prix unitaire négatif", () => {
+    assert.throws(
+      () =>
+        money.calculerLigne({
+          quantite: 1,
+          prixUnitaireCentimes: -1,
+          remisePourcent: 0,
+          tvaPourcent: 20
+        }),
+      {
+        name: "RangeError",
+        message: "Le prix unitaire ne peut pas être négatif."
+      }
+    );
+  });
+
+  it("calcule une quantité de 0,5 et arrondit au centime", () => {
+    assert.deepEqual(
+      money.calculerLigne({
+        quantite: 0.5,
+        prixUnitaireCentimes: 101,
+        remisePourcent: 0,
+        tvaPourcent: 0
+      }),
+      { htCentimes: 51, tvaCentimes: 0, ttcCentimes: 51 }
+    );
+  });
+
+  it("applique une remise de 50 % avec arrondi au centime", () => {
+    assert.deepEqual(
+      money.calculerLigne({
+        quantite: 1,
+        prixUnitaireCentimes: 101,
+        remisePourcent: 50,
+        tvaPourcent: 0
+      }),
+      { htCentimes: 50, tvaCentimes: 0, ttcCentimes: 50 }
+    );
+  });
 });
 
 describe("calculerTotaux", () => {
@@ -64,6 +104,21 @@ describe("calculerTotaux", () => {
       ttcCentimes: 22_801
     });
   });
+
+  it("calcule les totaux d'une seule ligne", () => {
+    const ligne = money.calculerLigne({
+      quantite: 1,
+      prixUnitaireCentimes: 10_000,
+      remisePourcent: 0,
+      tvaPourcent: 20
+    });
+
+    assert.deepEqual(money.calculerTotaux([ligne]), {
+      htCentimes: 10_000,
+      tvaCentimes: 2_000,
+      ttcCentimes: 12_000
+    });
+  });
 });
 
 describe("formatMAD", () => {
@@ -71,15 +126,21 @@ describe("formatMAD", () => {
     assert.equal(money.formatMAD(142_000_050), "1 420 000,50 MAD");
     assert.equal(money.formatMAD(0), "0,00 MAD");
   });
+
+  it("formate un montant négatif", () => {
+    assert.equal(money.formatMAD(-142_000_050), "-1 420 000,50 MAD");
+  });
 });
 
 describe("montantEnLettres", () => {
   const cas = [
-    [0, "zéro dirhams"],
+    [0, "zéro dirham"],
+    [1, "zéro dirham et un centime"],
     [100, "un dirham"],
     [2_100, "vingt et un dirhams"],
     [10_000, "cent dirhams"],
     [100_000, "mille dirhams"],
+    [100_000_000, "un million dirhams"],
     [
       142_000_050,
       "un million quatre cent vingt mille dirhams et cinquante centimes"

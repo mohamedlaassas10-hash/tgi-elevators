@@ -20,6 +20,9 @@ export function calculerLigne(args: {
   const tva = decimalRatio(args.tvaPourcent, "La TVA");
 
   assertCentimes(args.prixUnitaireCentimes, "Le prix unitaire");
+  if (args.prixUnitaireCentimes < 0) {
+    throw new RangeError("Le prix unitaire ne peut pas être négatif.");
+  }
   if (quantite.numerator < BigInt(0)) {
     throw new RangeError("La quantité ne peut pas être négative.");
   }
@@ -103,7 +106,8 @@ export function montantEnLettres(centimes: Centimes): string {
   const dirhams = absolu / BigInt(100);
   const centimesRestants = Number(absolu % BigInt(100));
   const nombreDirhams = nombreEnLettres(dirhams);
-  const libelleDirham = dirhams === BigInt(1) ? "dirham" : "dirhams";
+  const libelleDirham =
+    dirhams === BigInt(0) || dirhams === BigInt(1) ? "dirham" : "dirhams";
 
   if (centimesRestants === 0) {
     return `${signe}${nombreDirhams} ${libelleDirham}`;
@@ -117,7 +121,9 @@ export function montantEnLettres(centimes: Centimes): string {
 
 function assertCentimes(value: number, label: string): void {
   if (!Number.isSafeInteger(value)) {
-    throw new RangeError(`${label} doit être un nombre entier sûr de centimes.`);
+    throw new RangeError(
+      `${label} doit être un nombre entier sûr de centimes.`
+    );
   }
 }
 
@@ -152,7 +158,9 @@ function arrondirRatio(numerator: bigint, denominator: bigint): bigint {
 
 function versCentimesSurs(value: bigint): Centimes {
   if (value > BigInt(Number.MAX_SAFE_INTEGER) || value < BigInt(0)) {
-    throw new RangeError("Le montant calculé dépasse la plage sûre en centimes.");
+    throw new RangeError(
+      "Le montant calculé dépasse la plage sûre en centimes."
+    );
   }
   return Number(value);
 }
@@ -184,7 +192,9 @@ function nombreEnLettres(value: bigint): string {
       : `${partie} ${nombreEnLettres(reste)}`;
   }
 
-  throw new RangeError("Le montant est trop grand pour être écrit en lettres.");
+  throw new RangeError(
+    "Le montant est trop grand pour être écrit en lettres."
+  );
 }
 
 function moinsDeMille(value: number): string {
@@ -209,7 +219,15 @@ function moinsDeMille(value: number): string {
     "quinze",
     "seize"
   ];
-  const dizaines = ["", "", "vingt", "trente", "quarante", "cinquante", "soixante"];
+  const dizaines = [
+    "",
+    "",
+    "vingt",
+    "trente",
+    "quarante",
+    "cinquante",
+    "soixante"
+  ];
 
   if (value < 10) return unites[value];
   if (value < 17) return speciaux[value - 10];
@@ -238,7 +256,8 @@ function moinsDeMille(value: number): string {
   const centaines = Math.floor(value / 100);
   const reste = value % 100;
   const prefixe = centaines === 1 ? "cent" : `${unites[centaines]} cent`;
-  const prefixeAvecAccord = reste === 0 && centaines > 1 ? `${prefixe}s` : prefixe;
+  const prefixeAvecAccord =
+    reste === 0 && centaines > 1 ? `${prefixe}s` : prefixe;
 
   return reste === 0
     ? prefixeAvecAccord
