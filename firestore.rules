@@ -20,11 +20,15 @@ service cloud.firestore {
       allow read, write: if isDirector();
     }
 
+    match /counters/{id} {
+      allow read, write: if false;
+    }
+
     match /{collection}/{document=**} {
       allow read, create, update: if isActiveUser()
-        && !(collection in ['users', 'settings']);
+        && !(collection in ['users', 'settings', 'counters']);
       allow delete: if isActiveUser()
-        && !(collection in ['users', 'settings', 'factures', 'paiements', 'recus']);
+        && !(collection in ['users', 'settings', 'factures', 'paiements', 'recus', 'counters']);
     }
   }
 }

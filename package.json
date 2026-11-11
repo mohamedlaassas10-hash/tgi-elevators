@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test",
     "test:rules": "firebase emulators:exec --only firestore \"npm run test:rules:unit\"",
-    "test:rules:unit": "node --test tests/firestore.rules.test.mjs",
+    "test:rules:unit": "node --test tests/firestore.rules.test.mjs src/lib/firebase/tests/rules.test.ts",
     "seed": "node --env-file-if-exists=.env.local scripts/seed.mjs",
     "emulators": "firebase emulators:start --only firestore,auth",
     "deploy:firebase": "firebase deploy --only \"firestore:rules,firestore:indexes\""
