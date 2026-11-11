@@ -1,0 +1,8 @@
+node_modules/
+.next/
+.env.local
+serviceAccount.json
+*.log
+*.tsbuildinfo
+next-env.d.ts
+tgi-elevetors/
